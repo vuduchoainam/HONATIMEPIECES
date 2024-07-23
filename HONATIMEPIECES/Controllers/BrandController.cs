@@ -100,7 +100,7 @@ namespace HONATIMEPIECES.Controllers
         }
 
         [HttpPut("EditBrand/{id}")]
-        public async Task<IActionResult> Edit([FromBody] CreateBrandDTO eBrand)
+        public async Task<IActionResult> Edit(int id,[FromBody] CreateBrandDTO eBrand)
         {
             if (string.IsNullOrEmpty(eBrand.Name))
             {
@@ -108,8 +108,51 @@ namespace HONATIMEPIECES.Controllers
             }
             try
             {
+                var brand = await _brandService.GetByIdAsync(id);
+                if (brand == null)
+                {
+                    return StatusCodeResponse.NotFoundResponse("Brand not foung", "Brand not found");
+                }
+                brand.Name = eBrand.Name;
+                brand.Slug = StringUtil.GenerateSlug(eBrand.Name);
+                brand.Description = eBrand.Description;
+                brand.UpdatedAt = DateTime.Now;
 
+                await _brandService.UpdateAsync(brand);
+                await _brandService.SaveChangesAsync();
+
+                var result = new
+                {
+                    brand.Id,
+                    brand.Name,
+                    brand.Slug,
+                    brand.Description,
+                    CreateAt = StringUtil.FormatDate(brand.CreatedAt),
+                    UpdatedAt = StringUtil.FormatDate(brand.UpdatedAt)
+                };
+                return StatusCodeResponse.SuccessResponse(result, "Edit Brand successfully");
             }catch (Exception ex)
+            {
+                return StatusCodeResponse.InternalServerErrorResponse("An error occurred while processing the request", ex.Message);
+            }
+        }
+
+        [HttpDelete("DeleteBrand/{id}")]
+        public async Task<IActionResult> Delete (int id)
+        {
+            try
+            {
+                var brand = await _brandService.GetByIdAsync(id);
+                if (brand == null)
+                {
+                    return StatusCodeResponse.NotFoundResponse("Brand not found", "Brand not found");
+                }
+
+                await _brandService.DeleteAsync(id);
+                await _brandService.SaveChangesAsync();
+
+                return StatusCodeResponse.NoContentResponse("Delete Brand successfully");
+            }catch(Exception ex)
             {
                 return StatusCodeResponse.InternalServerErrorResponse("An error occurred while processing the request", ex.Message);
             }

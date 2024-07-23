@@ -19,5 +19,6 @@ namespace HONATIMEPIECES.Models
         public DateTime? UpdatedAt { get; set; } 
 
         public ICollection<Brand>? Brands { get; set; }
+        public ICollection<Product>? Products { get; set; }
     }
 }
