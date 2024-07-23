@@ -1,0 +1,6 @@
+@HONATIMEPIECES_HostAddress = http://localhost:5191
+
+GET {{HONATIMEPIECES_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
