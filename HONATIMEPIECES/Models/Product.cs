@@ -22,9 +22,6 @@ namespace HONATIMEPIECES.Models
         [Required(ErrorMessage = "Giá không được để trống")]
         public decimal Price { get; set; }
 
-        public int CategoryId { get; set; }
-        public Category? Category { get; set; }
-
         public int BrandId { get; set; }
         public Brand? Brand { get; set; }
 
@@ -32,7 +29,7 @@ namespace HONATIMEPIECES.Models
         [Range(1, int.MaxValue, ErrorMessage = "Số lượng sản phẩm phải lớn hơn 0.")]
         public int Quantity { get; set; }
 
-        public string Image { get; set; }
+        public virtual ICollection<ProductImage> Images { get; set; }
 
         [Required(ErrorMessage = "Trạng thái không được để trống")]
         public string Status { get; set; }
