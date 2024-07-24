@@ -154,6 +154,87 @@ namespace HONATIMEPIECES.Migrations
                     b.ToTable("ProductImage");
                 });
 
+            modelBuilder.Entity("HONATIMEPIECES.Models.Property", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Properties");
+                });
+
+            modelBuilder.Entity("HONATIMEPIECES.Models.PropertyProduct", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PropertyValueId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("PropertyId");
+
+                    b.HasIndex("PropertyValueId");
+
+                    b.ToTable("PropertyProducts");
+                });
+
+            modelBuilder.Entity("HONATIMEPIECES.Models.PropertyValue", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PropertyValues");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
@@ -385,6 +466,33 @@ namespace HONATIMEPIECES.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("HONATIMEPIECES.Models.PropertyProduct", b =>
+                {
+                    b.HasOne("HONATIMEPIECES.Models.Product", "Product")
+                        .WithMany("PropertyProducts")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HONATIMEPIECES.Models.Property", "Property")
+                        .WithMany("PropertyProducts")
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HONATIMEPIECES.Models.PropertyValue", "PropertyValue")
+                        .WithMany("PropertyProducts")
+                        .HasForeignKey("PropertyValueId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Property");
+
+                    b.Navigation("PropertyValue");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -449,6 +557,18 @@ namespace HONATIMEPIECES.Migrations
             modelBuilder.Entity("HONATIMEPIECES.Models.Product", b =>
                 {
                     b.Navigation("Images");
+
+                    b.Navigation("PropertyProducts");
+                });
+
+            modelBuilder.Entity("HONATIMEPIECES.Models.Property", b =>
+                {
+                    b.Navigation("PropertyProducts");
+                });
+
+            modelBuilder.Entity("HONATIMEPIECES.Models.PropertyValue", b =>
+                {
+                    b.Navigation("PropertyProducts");
                 });
 #pragma warning restore 612, 618
         }

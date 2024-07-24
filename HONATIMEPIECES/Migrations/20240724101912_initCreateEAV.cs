@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace HONATIMEPIECES.Migrations
 {
     /// <inheritdoc />
-    public partial class initCreate : Migration
+    public partial class initCreateEAV : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -56,14 +56,44 @@ namespace HONATIMEPIECES.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Slug = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Categories", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Properties",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Properties", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PropertyValues",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Value = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PropertyValues", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -173,6 +203,30 @@ namespace HONATIMEPIECES.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Brands",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Slug = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CategoryId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Brands", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Brands_Categories_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "Categories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Products",
                 columns: table => new
                 {
@@ -182,9 +236,8 @@ namespace HONATIMEPIECES.Migrations
                     Slug = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
                     Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    CategoryId = table.Column<int>(type: "int", nullable: false),
+                    BrandId = table.Column<int>(type: "int", nullable: false),
                     Quantity = table.Column<int>(type: "int", nullable: false),
-                    Image = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
@@ -193,9 +246,64 @@ namespace HONATIMEPIECES.Migrations
                 {
                     table.PrimaryKey("PK_Products", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Products_Categories_CategoryId",
-                        column: x => x.CategoryId,
-                        principalTable: "Categories",
+                        name: "FK_Products_Brands_BrandId",
+                        column: x => x.BrandId,
+                        principalTable: "Brands",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ProductImage",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ProductId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProductImage", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ProductImage_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PropertyProducts",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProductId = table.Column<int>(type: "int", nullable: false),
+                    PropertyId = table.Column<int>(type: "int", nullable: false),
+                    PropertyValueId = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PropertyProducts", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PropertyProducts_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PropertyProducts_Properties_PropertyId",
+                        column: x => x.PropertyId,
+                        principalTable: "Properties",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PropertyProducts_PropertyValues_PropertyValueId",
+                        column: x => x.PropertyValueId,
+                        principalTable: "PropertyValues",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -240,9 +348,34 @@ namespace HONATIMEPIECES.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Products_CategoryId",
-                table: "Products",
+                name: "IX_Brands_CategoryId",
+                table: "Brands",
                 column: "CategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductImage_ProductId",
+                table: "ProductImage",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Products_BrandId",
+                table: "Products",
+                column: "BrandId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PropertyProducts_ProductId",
+                table: "PropertyProducts",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PropertyProducts_PropertyId",
+                table: "PropertyProducts",
+                column: "PropertyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PropertyProducts_PropertyValueId",
+                table: "PropertyProducts",
+                column: "PropertyValueId");
         }
 
         /// <inheritdoc />
@@ -264,13 +397,28 @@ namespace HONATIMEPIECES.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Products");
+                name: "ProductImage");
+
+            migrationBuilder.DropTable(
+                name: "PropertyProducts");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Products");
+
+            migrationBuilder.DropTable(
+                name: "Properties");
+
+            migrationBuilder.DropTable(
+                name: "PropertyValues");
+
+            migrationBuilder.DropTable(
+                name: "Brands");
 
             migrationBuilder.DropTable(
                 name: "Categories");

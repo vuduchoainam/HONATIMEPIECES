@@ -29,12 +29,14 @@ namespace HONATIMEPIECES.Models
         [Range(1, int.MaxValue, ErrorMessage = "Số lượng sản phẩm phải lớn hơn 0.")]
         public int Quantity { get; set; }
 
-        public virtual ICollection<ProductImage> Images { get; set; }
+        public virtual ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
 
         [Required(ErrorMessage = "Trạng thái không được để trống")]
         public string Status { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
+
+        public virtual ICollection<PropertyProduct> PropertyProducts { get; set; } = new List<PropertyProduct>();
     }
 }

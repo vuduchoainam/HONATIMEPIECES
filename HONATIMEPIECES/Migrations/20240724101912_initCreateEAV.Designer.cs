@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HONATIMEPIECES.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240717091008_updateTableCategory")]
-    partial class updateTableCategory
+    [Migration("20240724101912_initCreateEAV")]
+    partial class initCreateEAV
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,6 +25,41 @@ namespace HONATIMEPIECES.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("HONATIMEPIECES.Models.Brand", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Slug")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("Brands");
+                });
+
             modelBuilder.Entity("HONATIMEPIECES.Models.Category", b =>
                 {
                     b.Property<int>("Id")
@@ -33,7 +68,7 @@ namespace HONATIMEPIECES.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2");
 
@@ -44,8 +79,7 @@ namespace HONATIMEPIECES.Migrations
                     b.Property<string>("Slug")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .ValueGeneratedOnAddOrUpdate()
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
@@ -61,7 +95,7 @@ namespace HONATIMEPIECES.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CategoryId")
+                    b.Property<int>("BrandId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
@@ -71,10 +105,6 @@ namespace HONATIMEPIECES.Migrations
                         .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
-
-                    b.Property<string>("Image")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -100,9 +130,112 @@ namespace HONATIMEPIECES.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoryId");
+                    b.HasIndex("BrandId");
 
                     b.ToTable("Products");
+                });
+
+            modelBuilder.Entity("HONATIMEPIECES.Models.ProductImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ProductImage");
+                });
+
+            modelBuilder.Entity("HONATIMEPIECES.Models.Property", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Properties");
+                });
+
+            modelBuilder.Entity("HONATIMEPIECES.Models.PropertyProduct", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PropertyValueId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("PropertyId");
+
+                    b.HasIndex("PropertyValueId");
+
+                    b.ToTable("PropertyProducts");
+                });
+
+            modelBuilder.Entity("HONATIMEPIECES.Models.PropertyValue", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PropertyValues");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -303,15 +436,64 @@ namespace HONATIMEPIECES.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("HONATIMEPIECES.Models.Product", b =>
+            modelBuilder.Entity("HONATIMEPIECES.Models.Brand", b =>
                 {
                     b.HasOne("HONATIMEPIECES.Models.Category", "Category")
-                        .WithMany("Products")
+                        .WithMany("Brands")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("HONATIMEPIECES.Models.Product", b =>
+                {
+                    b.HasOne("HONATIMEPIECES.Models.Brand", "Brand")
+                        .WithMany("Products")
+                        .HasForeignKey("BrandId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Brand");
+                });
+
+            modelBuilder.Entity("HONATIMEPIECES.Models.ProductImage", b =>
+                {
+                    b.HasOne("HONATIMEPIECES.Models.Product", "Product")
+                        .WithMany("Images")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("HONATIMEPIECES.Models.PropertyProduct", b =>
+                {
+                    b.HasOne("HONATIMEPIECES.Models.Product", "Product")
+                        .WithMany("PropertyProducts")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HONATIMEPIECES.Models.Property", "Property")
+                        .WithMany("PropertyProducts")
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HONATIMEPIECES.Models.PropertyValue", "PropertyValue")
+                        .WithMany("PropertyProducts")
+                        .HasForeignKey("PropertyValueId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Property");
+
+                    b.Navigation("PropertyValue");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -365,9 +547,31 @@ namespace HONATIMEPIECES.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("HONATIMEPIECES.Models.Category", b =>
+            modelBuilder.Entity("HONATIMEPIECES.Models.Brand", b =>
                 {
                     b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("HONATIMEPIECES.Models.Category", b =>
+                {
+                    b.Navigation("Brands");
+                });
+
+            modelBuilder.Entity("HONATIMEPIECES.Models.Product", b =>
+                {
+                    b.Navigation("Images");
+
+                    b.Navigation("PropertyProducts");
+                });
+
+            modelBuilder.Entity("HONATIMEPIECES.Models.Property", b =>
+                {
+                    b.Navigation("PropertyProducts");
+                });
+
+            modelBuilder.Entity("HONATIMEPIECES.Models.PropertyValue", b =>
+                {
+                    b.Navigation("PropertyProducts");
                 });
 #pragma warning restore 612, 618
         }
