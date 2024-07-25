@@ -13,5 +13,6 @@ namespace HONATIMEPIECES.Repository
         Task SaveChangesAsync();
         Task<int> CountAsync(Expression<Func<T, bool>> predicate);
         IQueryable<T> GetQueryable();
+        IQueryable<T> GetAll();
     }
 }

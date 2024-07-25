@@ -57,5 +57,10 @@ namespace HONATIMEPIECES.Repository
         {
             return _context.Set<T>().AsQueryable();
         }
+
+        public IQueryable<T> GetAll()
+        {
+            return _context.Set<T>().AsQueryable();
+        }
     }
 }

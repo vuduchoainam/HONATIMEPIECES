@@ -6,7 +6,7 @@ namespace HONATIMEPIECES.Interfaces
 {
     public interface ICategoryService
     {
-        Task<PagedResult<Category>> SearchCategoriesAsync(SearchCategoryDTO searchCategoryDto); // Search + Create + Sort + Filter
+        Task<PagedResult<Category>> SearchCategoriesAsync(SearchCategoryDTO searchCategoryDto); // Search + Sort + Filter
         Task AddCategoryAsync(Category category);
         Task SaveChangesAsync();
         Task<Category> GetByIdCategoryAsync(int id);
