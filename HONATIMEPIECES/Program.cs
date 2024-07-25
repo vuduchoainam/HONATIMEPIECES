@@ -24,6 +24,7 @@ builder.Services.AddScoped<IRepository<Brand>, Repository<Brand>>();
 builder.Services.AddScoped<IRepository<Product>, Repository<Product>>();
 builder.Services.AddScoped<IRepository<ProductImage>, Repository<ProductImage>>();
 builder.Services.AddScoped<IRepository<Property>, Repository<Property>>();
+builder.Services.AddScoped<IRepository<PropertyValue>, Repository<PropertyValue>>();
 
 
 //services
@@ -31,6 +32,7 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IBrandService, BrandService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IPropertyService, PropertyService>();
+builder.Services.AddScoped<IPropertyValueService, PropertyValueService>();
 
 var app = builder.Build();
 

@@ -11,7 +11,7 @@ namespace HONATIMEPIECES.Models
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Giá trị thuộc tính không được để trống")]
-        public string Value { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
