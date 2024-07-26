@@ -31,6 +31,7 @@ namespace HONATIMEPIECES.Controllers
                 {
                     c.Id,
                     c.Name,
+                    c.Description,
                     c.Slug,
                     CreatedAt = StringUtil.FormatDate(c.CreatedAt),
                     UpdatedAt = StringUtil.FormatDate(c.UpdatedAt)
@@ -128,6 +129,7 @@ namespace HONATIMEPIECES.Controllers
                 var category = new Category
                 {
                     Name = createCategoryDto.Name,
+                    Description = createCategoryDto.Description,
                     Slug = StringUtil.GenerateSlug(createCategoryDto.Name),
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now
@@ -150,6 +152,7 @@ namespace HONATIMEPIECES.Controllers
                     category.Id,
                     category.Name,
                     category.Slug,
+                    category.Description,
                     CreatedAt = StringUtil.FormatDate(category.CreatedAt),
                     UpdatedAt = StringUtil.FormatDate(category.UpdatedAt)
                 };
@@ -178,6 +181,7 @@ namespace HONATIMEPIECES.Controllers
                 }
 
                 category.Name = editCategoryDto.Name;
+                category.Description = editCategoryDto.Description;
                 category.Slug = StringUtil.GenerateSlug(editCategoryDto.Name);
                 category.UpdatedAt = DateTime.Now;
 
@@ -189,6 +193,7 @@ namespace HONATIMEPIECES.Controllers
                     category.Id,
                     category.Name,
                     category.Slug,
+                    category.Description,
                     CreatedAt = StringUtil.FormatDate(category.CreatedAt),
                     UpdatedAt = StringUtil.FormatDate(category.UpdatedAt)
                 };
