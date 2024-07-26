@@ -6,7 +6,7 @@ namespace HONATIMEPIECES.Interfaces
 {
     public interface IBrandService
     {
-        Task<PagedResult<Brand>> SearchAsync(SearchBrandDTO searchBrandDto); // Search + Sort + Filter
+        Task<PagedResult<BrandDTO>> SearchAsync(SearchBrandDTO searchBrandDto);
         Task AddAsync(Brand brand);
         Task SaveChangesAsync();
         Task<Brand> GetByIdAsync(int id);

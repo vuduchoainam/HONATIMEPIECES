@@ -22,7 +22,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IRepository<Category>, Repository<Category>>();
 builder.Services.AddScoped<IRepository<Brand>, Repository<Brand>>();
 builder.Services.AddScoped<IRepository<Product>, Repository<Product>>();
-builder.Services.AddScoped<IRepository<ProductImage>, Repository<ProductImage>>();
+builder.Services.AddScoped<IRepository<UploadImage>, Repository<UploadImage>>();
 builder.Services.AddScoped<IRepository<Property>, Repository<Property>>();
 builder.Services.AddScoped<IRepository<PropertyValue>, Repository<PropertyValue>>();
 

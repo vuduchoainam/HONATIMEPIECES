@@ -11,9 +11,12 @@ namespace HONATIMEPIECES.Services
     public class BrandService : IBrandService
     {
         private readonly IRepository<Brand> _brandRepository;
-        public BrandService(IRepository<Brand> brandRepository)
+        private readonly ApplicationDbContext _context;
+
+        public BrandService(IRepository<Brand> brandRepository, ApplicationDbContext context)
         {
             _brandRepository = brandRepository;
+            _context = context;
         }
 
         public async Task AddAsync(Brand brand)
@@ -30,7 +33,7 @@ namespace HONATIMEPIECES.Services
         public async Task DeleteAsync(int id)
         {
             var brand = await _brandRepository.GetByIdAsync(id);
-            if(brand != null)
+            if (brand != null)
             {
                 await _brandRepository.RemoveAsync(brand);
             }
@@ -46,7 +49,7 @@ namespace HONATIMEPIECES.Services
             await _brandRepository.SaveChangesAsync();
         }
 
-        public async Task<PagedResult<Brand>> SearchAsync(SearchBrandDTO searchBrandDto)
+        public async Task<PagedResult<BrandDTO>> SearchAsync(SearchBrandDTO searchBrandDto)
         {
             if (searchBrandDto.PageSize <= 0)
             {
@@ -57,41 +60,63 @@ namespace HONATIMEPIECES.Services
             {
                 searchBrandDto.PageNumber = 0;
             }
-            var query = _brandRepository.GetQueryable();
-            //getById
+
+            var query = _brandRepository.GetQueryable()
+                                        .Include(b => b.Images) // join bới UploadImage để hiển thị imageURL trong Brand
+                                        .AsQueryable();
+
+            // Filter by Id
             if (searchBrandDto.Id.HasValue)
             {
                 query = query.Where(b => b.Id == searchBrandDto.Id.Value);
             }
-            //search
+
+            // Search by keyword
             if (!string.IsNullOrEmpty(searchBrandDto.KeyWord))
             {
                 query = query.Where(b => b.Name.Contains(searchBrandDto.KeyWord));
             }
-            //search by categoryId
+
+            // Filter by categoryId
             if (searchBrandDto.CategoryId.HasValue)
             {
                 query = query.Where(b => b.CategoryId.Equals(searchBrandDto.CategoryId));
             }
-            //sort (ASC/DESC)
+
+            // Sort (ASC/DESC)
             bool desc = searchBrandDto.OrderByDirection.Equals("DESC", StringComparison.OrdinalIgnoreCase);
             query = query.OrderByDynamic(searchBrandDto.OrderBy, desc);
-            //count total resource
+
+            // Count total resources
             var totalCount = await query.CountAsync();
             var skip = searchBrandDto.PageNumber * searchBrandDto.PageSize;
             var items = await query.Skip(skip).Take(searchBrandDto.PageSize).ToListAsync();
 
-            var result = new PagedResult<Brand>
+            // Map entities to DTOs
+            var resultItems = items.Select(b => new BrandDTO
+            {
+                Id = b.Id,
+                Name = b.Name,
+                Slug = b.Slug,
+                Description = b.Description,
+                CategoryId = b.CategoryId,
+                CreatedAt = b.CreatedAt ?? DateTime.Now,
+                UpdatedAt = b.UpdatedAt ?? DateTime.Now,
+                ImageUrls = b.Images.Select(img => img.ImageUrl).ToList()
+            }).ToList();
+
+            var result = new PagedResult<BrandDTO>
             {
                 PageNumber = searchBrandDto.PageNumber,
                 PageSize = searchBrandDto.PageSize,
                 TotalCount = totalCount,
                 TotalPages = (int)Math.Ceiling(totalCount / (double)searchBrandDto.PageSize),
-                Items = items
+                Items = resultItems
             };
 
             return result;
         }
+
 
         public async Task UpdateAsync(Brand brand)
         {

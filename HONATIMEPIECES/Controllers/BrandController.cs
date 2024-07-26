@@ -1,21 +1,31 @@
-﻿
-using HONATIMEPIECES.DTOs.BrandDTO;
+﻿using HONATIMEPIECES.DTOs.BrandDTO;
 using HONATIMEPIECES.Helpers;
 using HONATIMEPIECES.Interfaces;
 using HONATIMEPIECES.Models;
+using HONATIMEPIECES.Repository;
 using HONATIMEPIECES.Services;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace HONATIMEPIECES.Controllers
 {
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     [ApiController]
-    public class BrandController : Controller
+    public class BrandController : ControllerBase
     {
         private readonly IBrandService _brandService;
-        public BrandController(IBrandService brandService)
+        private readonly IWebHostEnvironment _environment;
+        private readonly IRepository<UploadImage> _uploadImageRepository;
+
+        public BrandController(IBrandService brandService, IWebHostEnvironment environment, IRepository<UploadImage> brandImageRepository)
         {
             _brandService = brandService;
+            _environment = environment ?? throw new ArgumentNullException(nameof(environment));
+            _uploadImageRepository = brandImageRepository;
         }
 
         [HttpPost("SearchBrand")]
@@ -24,15 +34,16 @@ namespace HONATIMEPIECES.Controllers
             try
             {
                 var pagedResult = await _brandService.SearchAsync(searchBrandDto);
-                var items = pagedResult.Items.Select(b => new
+                var items = pagedResult.Items.Select(b => new BrandDTO
                 {
-                    b.Id,
-                    b.Name,
-                    b.Slug,
-                    b.CategoryId,
-                    b.Description,
-                    CreatedAt = StringUtil.FormatDate(b.CreatedAt),
-                    UpdatedAt = StringUtil.FormatDate(b.UpdatedAt),
+                    Id = b.Id,
+                    Name = b.Name,
+                    Slug = b.Slug,
+                    Description = b.Description,
+                    CategoryId = b.CategoryId,
+                    ImageUrls = b.ImageUrls,
+                    CreatedAt = b.CreatedAt ?? DateTime.Now,
+                    UpdatedAt = b.UpdatedAt ?? DateTime.Now,
                 }).ToList();
 
                 var result = new
@@ -51,10 +62,11 @@ namespace HONATIMEPIECES.Controllers
             }
         }
 
+
         [HttpPost("CreateBrand")]
-        public async Task<IActionResult> Create([FromBody] CreateBrandDTO createBrandDto)
+        public async Task<IActionResult> Create([FromForm] CreateBrandDTO createBrandDto)
         {
-            if(string.IsNullOrEmpty(createBrandDto.Name))
+            if (string.IsNullOrEmpty(createBrandDto.Name))
             {
                 return StatusCodeResponse.BadRequestResponse("Name cannot be empty", "Name cannot be empty");
             }
@@ -63,19 +75,42 @@ namespace HONATIMEPIECES.Controllers
                 var brand = new Brand
                 {
                     Name = createBrandDto.Name,
-                    Description = createBrandDto?.Description,
+                    Description = createBrandDto.Description,
                     Slug = StringUtil.GenerateSlug(createBrandDto.Name),
                     CategoryId = createBrandDto.CategoryId,
                     CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now
+                    UpdatedAt = DateTime.Now,
+                    Images = new List<UploadImage>()
                 };
+
                 var originalSlug = brand.Slug;
                 var slugIndex = 1;
                 while (await _brandService.CountWithSlugAsync(brand.Slug) > 0)
                 {
-                    // Nếu slug đã tồn tại
                     brand.Slug = $"{originalSlug}-{slugIndex}";
                     slugIndex++;
+                }
+
+                var imagesFolderPath = Path.Combine(_environment.WebRootPath, "images", "brand");
+                if (!Directory.Exists(imagesFolderPath))
+                {
+                    Directory.CreateDirectory(imagesFolderPath);
+                }
+
+                foreach (var image in createBrandDto.Images)
+                {
+                    if (image?.FileName != null)
+                    {
+                        var customFileName = $"{DateTime.Now:yyyyMMddHHmmss}_{Path.GetFileNameWithoutExtension(image.FileName)}{Path.GetExtension(image.FileName)}";
+                        var imagePath = Path.Combine(imagesFolderPath, customFileName);
+
+                        using (var stream = new FileStream(imagePath, FileMode.Create))
+                        {
+                            await image.CopyToAsync(stream);
+                        }
+
+                        brand.Images.Add(new UploadImage { ImageUrl = "/images/brand/" + customFileName });
+                    }
                 }
 
                 await _brandService.AddAsync(brand);
@@ -87,6 +122,7 @@ namespace HONATIMEPIECES.Controllers
                     brand.Name,
                     brand.Slug,
                     brand.Description,
+                    Images = brand.Images.Select(img => img.ImageUrl).ToList(),
                     brand.CategoryId,
                     CreatedAt = StringUtil.FormatDate(brand.CreatedAt),
                     UpdatedAt = StringUtil.FormatDate(brand.UpdatedAt)
@@ -100,7 +136,7 @@ namespace HONATIMEPIECES.Controllers
         }
 
         [HttpPut("EditBrand/{id}")]
-        public async Task<IActionResult> Edit(int id,[FromBody] CreateBrandDTO eBrand)
+        public async Task<IActionResult> Edit(int id, [FromForm] CreateBrandDTO eBrand)
         {
             if (string.IsNullOrEmpty(eBrand.Name))
             {
@@ -111,12 +147,36 @@ namespace HONATIMEPIECES.Controllers
                 var brand = await _brandService.GetByIdAsync(id);
                 if (brand == null)
                 {
-                    return StatusCodeResponse.NotFoundResponse("Brand not foung", "Brand not found");
+                    return StatusCodeResponse.NotFoundResponse("Brand not found", "Brand not found");
                 }
+
                 brand.Name = eBrand.Name;
                 brand.Slug = StringUtil.GenerateSlug(eBrand.Name);
                 brand.Description = eBrand.Description;
                 brand.UpdatedAt = DateTime.Now;
+
+                var imagesFolderPath = Path.Combine(_environment.WebRootPath, "images", "brand");
+                if (!Directory.Exists(imagesFolderPath))
+                {
+                    Directory.CreateDirectory(imagesFolderPath);
+                }
+
+                foreach (var image in eBrand.Images)
+                {
+                    if (image?.FileName != null)
+                    {
+                        // Tạo tên tệp tùy chỉnh
+                        var customFileName = $"{DateTime.Now:yyyyMMddHHmmss}_{Path.GetFileNameWithoutExtension(image.FileName)}{Path.GetExtension(image.FileName)}";
+                        var imagePath = Path.Combine(imagesFolderPath, customFileName);
+
+                        using (var stream = new FileStream(imagePath, FileMode.Create))
+                        {
+                            await image.CopyToAsync(stream);
+                        }
+
+                        brand.Images.Add(new UploadImage { ImageUrl = "/images/brand/" + customFileName });
+                    }
+                }
 
                 await _brandService.UpdateAsync(brand);
                 await _brandService.SaveChangesAsync();
@@ -127,18 +187,20 @@ namespace HONATIMEPIECES.Controllers
                     brand.Name,
                     brand.Slug,
                     brand.Description,
+                    Images = brand.Images.Select(img => img.ImageUrl).ToList(),
                     CreateAt = StringUtil.FormatDate(brand.CreatedAt),
                     UpdatedAt = StringUtil.FormatDate(brand.UpdatedAt)
                 };
                 return StatusCodeResponse.SuccessResponse(result, "Edit Brand successfully");
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return StatusCodeResponse.InternalServerErrorResponse("An error occurred while processing the request", ex.Message);
             }
         }
 
         [HttpDelete("DeleteBrand/{id}")]
-        public async Task<IActionResult> Delete (int id)
+        public async Task<IActionResult> Delete(int id)
         {
             try
             {
@@ -152,11 +214,11 @@ namespace HONATIMEPIECES.Controllers
                 await _brandService.SaveChangesAsync();
 
                 return StatusCodeResponse.NoContentResponse("Delete Brand successfully");
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 return StatusCodeResponse.InternalServerErrorResponse("An error occurred while processing the request", ex.Message);
             }
         }
-
     }
 }

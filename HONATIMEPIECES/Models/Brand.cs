@@ -13,6 +13,7 @@ namespace HONATIMEPIECES.Models
         public string? Slug { get; set; } = string.Empty;
 
         public string? Description {  get; set; } = string.Empty;
+        public ICollection<UploadImage> Images { get; set; } = new List<UploadImage>();
 
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime? CreatedAt { get; set; } = DateTime.Now;
