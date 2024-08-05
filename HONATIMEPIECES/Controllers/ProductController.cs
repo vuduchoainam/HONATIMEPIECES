@@ -10,26 +10,38 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Collections.Generic;
 using HONATIMEPIECES.Repository;
+using HONATIMEPIECES.DTOs.BrandDTO;
+using Microsoft.EntityFrameworkCore;
+using HONATIMEPIECES.Data;
+using HONATIMEPIECES.Services;
+using HONATIMEPIECES.DTOs.PropertyProductDTO;
+using Models = HONATIMEPIECES.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace HONATIMEPIECES.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class ProductController : ControllerBase
     {
         private readonly IProductService _productService;
-        private readonly IRepository<ProductImage> _productImageRepository;
+        private readonly IRepository<UploadImage> _uploadImageRepository;
         private readonly IWebHostEnvironment _environment;
+        private readonly ApplicationDbContext _context;
+        private readonly IPropertyProductService _propertyProductService;
 
-        public ProductController(IProductService productService, IRepository<ProductImage> productImageRepository, IWebHostEnvironment environment)
+        public ProductController(IProductService productService, IRepository<UploadImage> productImageRepository, IWebHostEnvironment environment, ApplicationDbContext context, IPropertyProductService propertyProductService)
         {
             _productService = productService;
-            _productImageRepository = productImageRepository;
+            _uploadImageRepository = productImageRepository;
             _environment = environment ?? throw new ArgumentNullException(nameof(environment));
+            _context = context;
+            _propertyProductService = propertyProductService;
         }
 
         [HttpPost("SearchProduct")]
-        public async Task<IActionResult> Search([FromBody] SearchProductDTO searchProductDto)
+        public async Task<IActionResult> Search([FromBody] DTOs.ProductDTO.PropertyProduct searchProductDto)
         {
             try
             {
@@ -45,6 +57,14 @@ namespace HONATIMEPIECES.Controllers
                     p.Quantity,
                     Images = p.Images.Select(img => img.ImageUrl).ToList(),
                     p.Status,
+                    PropertyProducts = p.PropertyProducts.Select(pp => new
+                    {
+                        pp.PropertyId,
+                        PropertyName = _context.Properties.FirstOrDefault(p => p.Id == pp.PropertyId)?.Name,
+                        pp.PropertyValueId,
+                        PropertyValueName = _context.PropertyValues.FirstOrDefault(pv => pv.Id == pp.PropertyValueId)?.Name,
+                        CombinedName = $"{_context.Properties.FirstOrDefault(p => p.Id == pp.PropertyId)?.Name} : {_context.PropertyValues.FirstOrDefault(pv => pv.Id == pp.PropertyValueId)?.Name}"
+                    }).ToList(),
                     CreatedAt = StringUtil.FormatDate(p.CreatedAt),
                     UpdatedAt = StringUtil.FormatDate(p.UpdatedAt),
                 }).ToList();
@@ -74,7 +94,7 @@ namespace HONATIMEPIECES.Controllers
             }
             try
             {
-                var product = new Product
+                var product = new Models.Product
                 {
                     Name = createProductDto.Name,
                     Slug = StringUtil.GenerateSlug(createProductDto.Name),
@@ -85,7 +105,8 @@ namespace HONATIMEPIECES.Controllers
                     Status = createProductDto.Status,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now,
-                    Images = new List<ProductImage>()
+                    Images = new List<Models.UploadImage>(),
+                    PropertyProducts = new List<Models.PropertyProduct>()
                 };
 
                 var originalSlug = product.Slug;
@@ -96,7 +117,7 @@ namespace HONATIMEPIECES.Controllers
                     slugIndex++;
                 }
 
-                var imagesFolderPath = Path.Combine(_environment.WebRootPath, "images");
+                var imagesFolderPath = Path.Combine(_environment.WebRootPath, "images", "product");
                 if (!Directory.Exists(imagesFolderPath))
                 {
                     Directory.CreateDirectory(imagesFolderPath);
@@ -106,7 +127,6 @@ namespace HONATIMEPIECES.Controllers
                 {
                     if (image?.FileName != null)
                     {
-                        // Tạo tên tệp tùy chỉnh
                         var customFileName = $"{DateTime.Now:yyyyMMddHHmmss}_{Path.GetFileNameWithoutExtension(image.FileName)}{Path.GetExtension(image.FileName)}";
                         var imagePath = Path.Combine(imagesFolderPath, customFileName);
 
@@ -115,12 +135,29 @@ namespace HONATIMEPIECES.Controllers
                             await image.CopyToAsync(stream);
                         }
 
-                        product.Images.Add(new ProductImage { ImageUrl = "/images/" + customFileName });
+                        product.Images.Add(new Models.UploadImage { ImageUrl = "/images/product/" + customFileName });
                     }
                 }
 
+                // Save product to get the ProductId
                 await _productService.AddAsync(product);
                 await _productService.SaveChangesAsync();
+
+                // Add PropertyProduct entries with the obtained ProductId
+                foreach (var pp in createProductDto.PropertyProducts)
+                {
+                    var propertyProduct = new Models.PropertyProduct
+                    {
+                        ProductId = product.Id,
+                        PropertyId = pp.PropertyId,
+                        PropertyValueId = pp.PropertyValueId
+                    };
+
+                    product.PropertyProducts.Add(propertyProduct);
+                }
+
+                // Save PropertyProduct entries
+                await _propertyProductService.SaveChangesAsync();
 
                 var result = new
                 {
@@ -132,17 +169,26 @@ namespace HONATIMEPIECES.Controllers
                     product.BrandId,
                     product.Quantity,
                     Images = product.Images.Select(img => img.ImageUrl).ToList(),
+                    PropertyProducts = product.PropertyProducts.Select(pp => new
+                    {
+                        pp.PropertyId,
+                        PropertyName = _context.Properties.FirstOrDefault(p => p.Id == pp.PropertyId)?.Name,
+                        pp.PropertyValueId,
+                        PropertyValueName = _context.PropertyValues.FirstOrDefault(pv => pv.Id == pp.PropertyValueId)?.Name,
+                        CombinedName = $"{_context.Properties.FirstOrDefault(p => p.Id == pp.PropertyId)?.Name} : {_context.PropertyValues.FirstOrDefault(pv => pv.Id == pp.PropertyValueId)?.Name}"
+                    }).ToList(),
                     product.Status,
                     CreatedAt = StringUtil.FormatDate(product.CreatedAt),
                     UpdatedAt = StringUtil.FormatDate(product.UpdatedAt)
                 };
+
                 return StatusCodeResponse.CreatedResponse(result);
+
             }
             catch (Exception ex)
             {
                 return StatusCodeResponse.InternalServerErrorResponse("An error occurred while processing the request", ex.Message);
             }
         }
-
     }
 }

@@ -6,7 +6,7 @@ namespace HONATIMEPIECES.Interfaces
 {
     public interface IProductService
     {
-        Task<PagedResult<Product>> SearchAsync(SearchProductDTO searchProductDTO);
+        Task<PagedResult<Product>> SearchAsync(DTOs.ProductDTO.PropertyProduct searchProductDTO);
         Task AddAsync(Product product);
         Task UpdateAsync(Product product);
         Task SaveChangesAsync();

@@ -29,7 +29,7 @@ namespace HONATIMEPIECES.Models
         [Range(1, int.MaxValue, ErrorMessage = "Số lượng sản phẩm phải lớn hơn 0.")]
         public int Quantity { get; set; }
 
-        public virtual ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
+        public virtual ICollection<UploadImage> Images { get; set; } = new List<UploadImage>();
 
         [Required(ErrorMessage = "Trạng thái không được để trống")]
         public string Status { get; set; }

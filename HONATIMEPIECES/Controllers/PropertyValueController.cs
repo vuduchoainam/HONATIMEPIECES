@@ -4,10 +4,14 @@ using HONATIMEPIECES.Helpers;
 using HONATIMEPIECES.Interfaces;
 using HONATIMEPIECES.Models;
 using HONATIMEPIECES.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HONATIMEPIECES.Controllers
 {
+    [Route("[controller]")]
+    [ApiController]
+    [Authorize(Roles = "Admin")]
     public class PropertyValueController : Controller
     {
         private readonly IPropertyValueService _propertyValueService;

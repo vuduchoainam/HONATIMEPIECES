@@ -17,14 +17,16 @@ namespace HONATIMEPIECES.Services
     public class ProductService : IProductService
     {
         private readonly IRepository<Product> _productRepository;
-        private readonly IRepository<ProductImage> _productImageRepository;
+        private readonly IRepository<UploadImage> _uploadImageRepository;
         private readonly IWebHostEnvironment _environment;
+        private readonly ApplicationDbContext _context;
 
-        public ProductService(IRepository<Product> productRepository, IRepository<ProductImage> productImageRepository, IWebHostEnvironment environment)
+        public ProductService(IRepository<Product> productRepository, IRepository<UploadImage> productImageRepository, IWebHostEnvironment environment, ApplicationDbContext context)
         {
             _productRepository = productRepository;
-            _productImageRepository = productImageRepository;
+            _uploadImageRepository = productImageRepository;
             _environment = environment;
+            _context = context;
         }
 
         public async Task AddAsync(Product product)
@@ -60,8 +62,12 @@ namespace HONATIMEPIECES.Services
             await _productRepository.SaveChangesAsync();
         }
 
-        public async Task<PagedResult<Product>> SearchAsync(SearchProductDTO searchProductDTO)
+        public async Task<PagedResult<Product>> SearchAsync(DTOs.ProductDTO.PropertyProduct searchProductDTO)
         {
+            var query = _productRepository.GetQueryable()
+                                        .Include(p => p.Images) // join với UploadImage để hiển thị imageURL trong Brand
+                                        .Include(p => p.PropertyProducts) //join với bảng PropertyProduct
+                                        .AsQueryable();
             if (searchProductDTO.PageSize <= 0)
             {
                 searchProductDTO.PageSize = 10;
@@ -72,7 +78,7 @@ namespace HONATIMEPIECES.Services
                 searchProductDTO.PageNumber = 0;
             }
 
-            var query = _productRepository.GetQueryable();
+            //var query = _productRepository.GetQueryable();
 
             // Tìm kiếm theo Id
             if (searchProductDTO.Id.HasValue)

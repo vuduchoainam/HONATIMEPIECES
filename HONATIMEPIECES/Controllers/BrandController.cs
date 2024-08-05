@@ -13,7 +13,7 @@ using System.Collections.Generic;
 
 namespace HONATIMEPIECES.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class BrandController : ControllerBase
     {

@@ -1,4 +1,6 @@
-﻿namespace HONATIMEPIECES.DTOs.ProductDTO
+﻿using HONATIMEPIECES.DTOs.PropertyProductDTO;
+
+namespace HONATIMEPIECES.DTOs.ProductDTO
 {
     public class CreateProductDTO
     {
@@ -8,6 +10,8 @@
         public int BrandId { get; set; }
         public int Quantity { get; set; }
         public string Status { get; set; }
-        public IList<IFormFile> Images { get; set; }
+        public List<IFormFile> Images { get; set; } = new List<IFormFile>();
+        public List<CreatePropertyProductDTO> PropertyProducts { get; set; } = new List<CreatePropertyProductDTO>();
     }
+
 }

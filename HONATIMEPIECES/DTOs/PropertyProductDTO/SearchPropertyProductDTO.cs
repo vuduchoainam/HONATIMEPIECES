@@ -1,10 +1,8 @@
-﻿namespace HONATIMEPIECES.DTOs.ProductDTO
+﻿namespace HONATIMEPIECES.DTOs.PropertyProductDTO.SearchPropertyProductDTO
 {
-    public class PropertyProduct
+    public class SearchPropertyProductDTO
     {
         public int? Id { get; set; }
-        public string? Name { get; set; }
-        public int? BrandId { get; set; }
         public int PageNumber { get; set; } = 0;
         public int PageSize { get; set; } = 0;
         public string? KeyWord { get; set; }
