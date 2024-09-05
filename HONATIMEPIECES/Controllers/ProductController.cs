@@ -202,5 +202,133 @@ namespace HONATIMEPIECES.Controllers
                 return StatusCodeResponse.InternalServerErrorResponse("An error occurred while processing the request", ex.Message);
             }
         }
+
+        [HttpPut("EditProduct/{id}")]
+        public async Task<IActionResult> Edit(int id, [FromForm] CreateProductDTO editProductDto)
+        {
+            if (string.IsNullOrEmpty(editProductDto.Name))
+            {
+                return StatusCodeResponse.BadRequestResponse("Product name cannot be empty", "Product name cannot be empty");
+            }
+            try
+            {
+                var product = await _productService.GetProductByIdAsync(id);
+                if (product == null)
+                {
+                    return StatusCodeResponse.NotFoundResponse("Category not found", "Category not found");
+                }
+
+                product.Name = editProductDto.Name;
+                product.Description = editProductDto.Description;
+                product.Slug = StringUtil.GenerateSlug(editProductDto.Name);
+                product.Price = editProductDto.Price;
+                product.BrandId = editProductDto.BrandId;
+                product.Quantity = editProductDto.Quantity;
+                product.Status = editProductDto.Status;
+                product.UpdatedAt = DateTime.Now;
+
+                // Handling images, if any
+                var imagesFolderPath = Path.Combine(_environment.WebRootPath, "images", "product");
+                if (!Directory.Exists(imagesFolderPath))
+                {
+                    Directory.CreateDirectory(imagesFolderPath);
+                }
+
+                if (editProductDto.Images != null)
+                {
+                    foreach (var image in editProductDto.Images)
+                    {
+                        if (image?.FileName != null)
+                        {
+                            var fileName = Path.GetFileName(image.FileName);
+                            var filePath = Path.Combine(imagesFolderPath, fileName);
+                            using (var stream = new FileStream(filePath, FileMode.Create))
+                            {
+                                await image.CopyToAsync(stream);
+                            }
+                            product.Images.Add(new Models.UploadImage { ImageUrl = "/images/product/" + fileName });
+                        }
+                    }
+                }
+
+                // Updating PropertyProducts
+                _context.PropertyProducts.RemoveRange(product.PropertyProducts);
+                foreach (var pp in editProductDto.PropertyProducts)
+                {
+                    product.PropertyProducts.Add(new Models.PropertyProduct
+                    {
+                        PropertyId = pp.PropertyId,
+                        PropertyValueId = pp.PropertyValueId
+                    });
+                }
+
+                await _productService.UpdateAsync(product);
+                await _productService.SaveChangesAsync();
+
+                var result = new
+                {
+                    product.Id,
+                    product.Name,
+                    product.Slug,
+                    product.Description,
+                    product.Price,
+                    product.BrandId,
+                    product.Quantity,
+                    Images = product.Images.Select(img => img.ImageUrl).ToList(),
+                    PropertyProducts = product.PropertyProducts.Select(pp => new
+                    {
+                        pp.PropertyId,
+                        PropertyName = _context.Properties.FirstOrDefault(p => p.Id == pp.PropertyId)?.Name,
+                        pp.PropertyValueId,
+                        PropertyValueName = _context.PropertyValues.FirstOrDefault(pv => pv.Id == pp.PropertyValueId)?.Name,
+                    }).ToList(),
+                    product.Status,
+                    CreatedAt = StringUtil.FormatDate(product.CreatedAt),
+                    UpdatedAt = StringUtil.FormatDate(product.UpdatedAt)
+                };
+
+                return StatusCodeResponse.SuccessResponse(result, "Edit Product successfully");
+            }
+            catch (Exception ex)
+            {
+                return StatusCodeResponse.InternalServerErrorResponse("An error occurred while processing the request", ex.Message);
+            }
+        }
+
+        [HttpDelete("DeleteProduct/{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                var product = await _productService.GetProductByIdAsync(id);
+                if (product == null)
+                {
+                    return StatusCodeResponse.NotFoundResponse("Product not found", "Product not found");
+                }
+
+                //handle associated images if any
+                var images = await _uploadImageRepository.FindAsync(img => img.ProductId == id);
+                foreach (var image in images)
+                {
+                    _uploadImageRepository.RemoveAsync(image);
+                }
+
+                // handle associated property products
+                var propertyProducts = await _propertyProductService.FindAsync(pp => pp.ProductId == id);
+                foreach (var propProduct in propertyProducts)
+                {
+                    await _propertyProductService.DeleteAsync(propProduct.Id);
+                }
+
+                await _productService.DeleteAsync(id);
+                await _productService.SaveChangesAsync();
+
+                return StatusCodeResponse.NoContentResponse("Delete Product successfully");
+            }
+            catch (Exception ex)
+            {
+                return StatusCodeResponse.InternalServerErrorResponse("An error occurred while processing the request", ex.Message);
+            }
+        }
     }
 }

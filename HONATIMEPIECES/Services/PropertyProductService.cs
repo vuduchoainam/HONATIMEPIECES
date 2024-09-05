@@ -5,6 +5,7 @@ using HONATIMEPIECES.Interfaces;
 using HONATIMEPIECES.Models;
 using HONATIMEPIECES.Repository;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace HONATIMEPIECES.Services
 {
@@ -85,6 +86,11 @@ namespace HONATIMEPIECES.Services
         public async Task<PropertyProduct> GetByIdCategoryAsync(int id)
         {
             return await _propertyProductRepository.GetByIdAsync(id);
+        }
+
+        public async Task<IEnumerable<PropertyProduct>> FindAsync(Expression<Func<PropertyProduct, bool>> predicate)
+        {
+            return await _propertyProductRepository.FindAsync(predicate);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using HONATIMEPIECES.Data;
 using HONATIMEPIECES.DTOs.PropertyProductDTO.SearchPropertyProductDTO;
 using HONATIMEPIECES.Models;
+using System.Linq.Expressions;
 
 namespace HONATIMEPIECES.Interfaces
 {
@@ -13,5 +14,6 @@ namespace HONATIMEPIECES.Interfaces
         Task DeleteAsync(int id);
         Task SaveChangesAsync();
         Task<int> CountAsync();
+        Task<IEnumerable<PropertyProduct>> FindAsync(Expression<Func<PropertyProduct, bool>> predicate);
     }
 }
