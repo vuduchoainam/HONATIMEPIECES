@@ -6,11 +6,13 @@ using HONATIMEPIECES.Data;
 using HONATIMEPIECES.DTOs.CategoryDTO;
 using HONATIMEPIECES.Interfaces;
 using HONATIMEPIECES.Helpers;
+using Microsoft.AspNetCore.Authorization;
 
 namespace HONATIMEPIECES.Controllers
 {
     [Route("[controller]")]
     [ApiController]
+    //[Authorize(Roles = "Admin")]
     public class CategoryController : Controller
     {
         private readonly ICategoryService _categoryService;
@@ -19,7 +21,7 @@ namespace HONATIMEPIECES.Controllers
         {
             _categoryService = categoryService;
         }
-
+        
         [HttpPost("SearchCategory")]
         public async Task<IActionResult> Search([FromBody] SearchCategoryDTO searchCategoryDto)
         {

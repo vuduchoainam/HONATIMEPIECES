@@ -1,4 +1,4 @@
-using HONATIMEPIECES.Data;
+﻿using HONATIMEPIECES.Data;
 using HONATIMEPIECES.Interfaces;
 using HONATIMEPIECES.Models;
 using HONATIMEPIECES.Repository;
@@ -22,6 +22,16 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigins",
+        builder =>
+        {
+            builder.WithOrigins("http://localhost:8080")
+                   .AllowAnyMethod()
+                   .AllowAnyHeader();
+        });
+});
 //Add Identity & JWT authenication
 //Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
@@ -60,6 +70,8 @@ builder.Services.AddSwaggerGen(options =>
     options.OperationFilter<SecurityRequirementsOperationFilter>();
 });
 
+
+
 // Register repositories and services
 builder.Services.AddScoped<IRepository<Category>, Repository<Category>>();
 builder.Services.AddScoped<IRepository<Brand>, Repository<Brand>>();
@@ -84,6 +96,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseStaticFiles(); // Cấu hình này để phục vụ các tệp tĩnh từ wwwroot
+
+app.UseCors("AllowSpecificOrigins");
 
 app.UseHttpsRedirection();
 

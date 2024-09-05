@@ -11,7 +11,7 @@ namespace HONATIMEPIECES.Controllers
 {
     [Route("[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
+    //[Authorize(Roles = "Admin")]
     public class PropertyController
     {
         private readonly IPropertyService _propertyService;

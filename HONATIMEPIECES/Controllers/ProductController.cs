@@ -22,7 +22,7 @@ namespace HONATIMEPIECES.Controllers
 {
     [Route("[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
+    //[Authorize(Roles = "Admin")]
     public class ProductController : ControllerBase
     {
         private readonly IProductService _productService;
@@ -53,7 +53,7 @@ namespace HONATIMEPIECES.Controllers
                     p.Slug,
                     p.Description,
                     p.Price,
-                    p.BrandId,
+                    BrandName = p.Brand != null ? p.Brand.Name : null,
                     p.Quantity,
                     Images = p.Images.Select(img => img.ImageUrl).ToList(),
                     p.Status,
@@ -127,14 +127,26 @@ namespace HONATIMEPIECES.Controllers
                 {
                     if (image?.FileName != null)
                     {
-                        var customFileName = $"{DateTime.Now:yyyyMMddHHmmss}_{Path.GetFileNameWithoutExtension(image.FileName)}{Path.GetExtension(image.FileName)}";
+                        // Lấy tên tệp không có phần mở rộng và phần mở rộng của tệp
+                        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(image.FileName);
+                        var fileExtension = Path.GetExtension(image.FileName);
+
+                        // Thay thế khoảng trắng bằng dấu gạch dưới trong tên tệp
+                        var sanitizedFileName = fileNameWithoutExtension.Replace(" ", "_");
+
+                        // Tạo tên tệp tùy chỉnh với định dạng thời gian và tên tệp đã được thay thế
+                        var customFileName = $"{DateTime.Now:yyyyMMddHHmmss}_{sanitizedFileName}{fileExtension}";
+
+                        // Tạo đường dẫn đầy đủ cho tệp hình ảnh
                         var imagePath = Path.Combine(imagesFolderPath, customFileName);
 
+                        // Lưu tệp vào thư mục wwwroot/images/product
                         using (var stream = new FileStream(imagePath, FileMode.Create))
                         {
                             await image.CopyToAsync(stream);
                         }
 
+                        // Thêm URL hình ảnh vào danh sách hình ảnh của sản phẩm
                         product.Images.Add(new Models.UploadImage { ImageUrl = "/images/product/" + customFileName });
                     }
                 }

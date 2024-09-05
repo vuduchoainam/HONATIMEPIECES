@@ -65,6 +65,7 @@ namespace HONATIMEPIECES.Services
         public async Task<PagedResult<Product>> SearchAsync(DTOs.ProductDTO.PropertyProduct searchProductDTO)
         {
             var query = _productRepository.GetQueryable()
+                                        .Include(p => p.Brand)
                                         .Include(p => p.Images) // join với UploadImage để hiển thị imageURL trong Brand
                                         .Include(p => p.PropertyProducts) //join với bảng PropertyProduct
                                         .AsQueryable();
